@@ -1,0 +1,1 @@
+{"version":3,"file":"NetManager.js","sourceRoot":"","sources":["../../src/Manager/NetManager.ts"],"names":[],"mappings":";;;AACA,2BAAoC;AACpC,MAAa,UAAU;IAGnB,MAAM,CAAC,IAAI;QACP,IAAI,CAAC,SAAS,GAAG,IAAI,oBAAe,CAAC,EAAE,IAAI,EAAE,WAAW,EAAE,IAAI,EAAE,IAAI,EAAE,CAAC,CAAA;IAC3E,CAAC;CACJ;AAND,gCAMC"}

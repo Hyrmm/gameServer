@@ -1,0 +1,9 @@
+{
+    "verbose": false,
+    "watch": [
+        "src/**/*"
+    ],
+    "ignore": [
+        "node_modules"
+    ]
+}

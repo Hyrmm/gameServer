@@ -59,6 +59,351 @@ function _decodeCommonData(bb: ByteBuffer): CommonData {
   return message;
 }
 
+export interface S2C_Frames {
+  playerMove?: PlayerMove[];
+}
+
+export function encodeS2C_Frames(message: S2C_Frames): Uint8Array {
+  let bb = popByteBuffer();
+  _encodeS2C_Frames(message, bb);
+  return toUint8Array(bb);
+}
+
+function _encodeS2C_Frames(message: S2C_Frames, bb: ByteBuffer): void {
+  // repeated PlayerMove playerMove = 1;
+  let array$playerMove = message.playerMove;
+  if (array$playerMove !== undefined) {
+    for (let value of array$playerMove) {
+      writeVarint32(bb, 10);
+      let nested = popByteBuffer();
+      _encodePlayerMove(value, nested);
+      writeVarint32(bb, nested.limit);
+      writeByteBuffer(bb, nested);
+      pushByteBuffer(nested);
+    }
+  }
+}
+
+export function decodeS2C_Frames(binary: Uint8Array): S2C_Frames {
+  return _decodeS2C_Frames(wrapByteBuffer(binary));
+}
+
+function _decodeS2C_Frames(bb: ByteBuffer): S2C_Frames {
+  let message: S2C_Frames = {} as any;
+
+  end_of_message: while (!isAtEnd(bb)) {
+    let tag = readVarint32(bb);
+
+    switch (tag >>> 3) {
+      case 0:
+        break end_of_message;
+
+      // repeated PlayerMove playerMove = 1;
+      case 1: {
+        let limit = pushTemporaryLength(bb);
+        let values = message.playerMove || (message.playerMove = []);
+        values.push(_decodePlayerMove(bb));
+        bb.limit = limit;
+        break;
+      }
+
+      default:
+        skipUnknownField(bb, tag & 7);
+    }
+  }
+
+  return message;
+}
+
+export interface C2S_Frames {
+  playerMove?: PlayerMove;
+}
+
+export function encodeC2S_Frames(message: C2S_Frames): Uint8Array {
+  let bb = popByteBuffer();
+  _encodeC2S_Frames(message, bb);
+  return toUint8Array(bb);
+}
+
+function _encodeC2S_Frames(message: C2S_Frames, bb: ByteBuffer): void {
+  // optional PlayerMove playerMove = 1;
+  let $playerMove = message.playerMove;
+  if ($playerMove !== undefined) {
+    writeVarint32(bb, 10);
+    let nested = popByteBuffer();
+    _encodePlayerMove($playerMove, nested);
+    writeVarint32(bb, nested.limit);
+    writeByteBuffer(bb, nested);
+    pushByteBuffer(nested);
+  }
+}
+
+export function decodeC2S_Frames(binary: Uint8Array): C2S_Frames {
+  return _decodeC2S_Frames(wrapByteBuffer(binary));
+}
+
+function _decodeC2S_Frames(bb: ByteBuffer): C2S_Frames {
+  let message: C2S_Frames = {} as any;
+
+  end_of_message: while (!isAtEnd(bb)) {
+    let tag = readVarint32(bb);
+
+    switch (tag >>> 3) {
+      case 0:
+        break end_of_message;
+
+      // optional PlayerMove playerMove = 1;
+      case 1: {
+        let limit = pushTemporaryLength(bb);
+        message.playerMove = _decodePlayerMove(bb);
+        bb.limit = limit;
+        break;
+      }
+
+      default:
+        skipUnknownField(bb, tag & 7);
+    }
+  }
+
+  return message;
+}
+
+export interface PlayerMove {
+  playerId?: number;
+  dateTime?: string;
+  speed?: PlayerMoveSpeed;
+}
+
+export function encodePlayerMove(message: PlayerMove): Uint8Array {
+  let bb = popByteBuffer();
+  _encodePlayerMove(message, bb);
+  return toUint8Array(bb);
+}
+
+function _encodePlayerMove(message: PlayerMove, bb: ByteBuffer): void {
+  // optional int32 playerId = 1;
+  let $playerId = message.playerId;
+  if ($playerId !== undefined) {
+    writeVarint32(bb, 8);
+    writeVarint64(bb, intToLong($playerId));
+  }
+
+  // optional string dateTime = 2;
+  let $dateTime = message.dateTime;
+  if ($dateTime !== undefined) {
+    writeVarint32(bb, 18);
+    writeString(bb, $dateTime);
+  }
+
+  // optional PlayerMoveSpeed speed = 3;
+  let $speed = message.speed;
+  if ($speed !== undefined) {
+    writeVarint32(bb, 26);
+    let nested = popByteBuffer();
+    _encodePlayerMoveSpeed($speed, nested);
+    writeVarint32(bb, nested.limit);
+    writeByteBuffer(bb, nested);
+    pushByteBuffer(nested);
+  }
+}
+
+export function decodePlayerMove(binary: Uint8Array): PlayerMove {
+  return _decodePlayerMove(wrapByteBuffer(binary));
+}
+
+function _decodePlayerMove(bb: ByteBuffer): PlayerMove {
+  let message: PlayerMove = {} as any;
+
+  end_of_message: while (!isAtEnd(bb)) {
+    let tag = readVarint32(bb);
+
+    switch (tag >>> 3) {
+      case 0:
+        break end_of_message;
+
+      // optional int32 playerId = 1;
+      case 1: {
+        message.playerId = readVarint32(bb);
+        break;
+      }
+
+      // optional string dateTime = 2;
+      case 2: {
+        message.dateTime = readString(bb, readVarint32(bb));
+        break;
+      }
+
+      // optional PlayerMoveSpeed speed = 3;
+      case 3: {
+        let limit = pushTemporaryLength(bb);
+        message.speed = _decodePlayerMoveSpeed(bb);
+        bb.limit = limit;
+        break;
+      }
+
+      default:
+        skipUnknownField(bb, tag & 7);
+    }
+  }
+
+  return message;
+}
+
+export interface PlayerMoveSpeed {
+  x?: number;
+  y?: number;
+}
+
+export function encodePlayerMoveSpeed(message: PlayerMoveSpeed): Uint8Array {
+  let bb = popByteBuffer();
+  _encodePlayerMoveSpeed(message, bb);
+  return toUint8Array(bb);
+}
+
+function _encodePlayerMoveSpeed(message: PlayerMoveSpeed, bb: ByteBuffer): void {
+  // optional int32 x = 1;
+  let $x = message.x;
+  if ($x !== undefined) {
+    writeVarint32(bb, 8);
+    writeVarint64(bb, intToLong($x));
+  }
+
+  // optional int32 y = 2;
+  let $y = message.y;
+  if ($y !== undefined) {
+    writeVarint32(bb, 16);
+    writeVarint64(bb, intToLong($y));
+  }
+}
+
+export function decodePlayerMoveSpeed(binary: Uint8Array): PlayerMoveSpeed {
+  return _decodePlayerMoveSpeed(wrapByteBuffer(binary));
+}
+
+function _decodePlayerMoveSpeed(bb: ByteBuffer): PlayerMoveSpeed {
+  let message: PlayerMoveSpeed = {} as any;
+
+  end_of_message: while (!isAtEnd(bb)) {
+    let tag = readVarint32(bb);
+
+    switch (tag >>> 3) {
+      case 0:
+        break end_of_message;
+
+      // optional int32 x = 1;
+      case 1: {
+        message.x = readVarint32(bb);
+        break;
+      }
+
+      // optional int32 y = 2;
+      case 2: {
+        message.y = readVarint32(bb);
+        break;
+      }
+
+      default:
+        skipUnknownField(bb, tag & 7);
+    }
+  }
+
+  return message;
+}
+
+export interface S2C_PlayerJoin {
+  serverTime?: string;
+}
+
+export function encodeS2C_PlayerJoin(message: S2C_PlayerJoin): Uint8Array {
+  let bb = popByteBuffer();
+  _encodeS2C_PlayerJoin(message, bb);
+  return toUint8Array(bb);
+}
+
+function _encodeS2C_PlayerJoin(message: S2C_PlayerJoin, bb: ByteBuffer): void {
+  // optional string serverTime = 1;
+  let $serverTime = message.serverTime;
+  if ($serverTime !== undefined) {
+    writeVarint32(bb, 10);
+    writeString(bb, $serverTime);
+  }
+}
+
+export function decodeS2C_PlayerJoin(binary: Uint8Array): S2C_PlayerJoin {
+  return _decodeS2C_PlayerJoin(wrapByteBuffer(binary));
+}
+
+function _decodeS2C_PlayerJoin(bb: ByteBuffer): S2C_PlayerJoin {
+  let message: S2C_PlayerJoin = {} as any;
+
+  end_of_message: while (!isAtEnd(bb)) {
+    let tag = readVarint32(bb);
+
+    switch (tag >>> 3) {
+      case 0:
+        break end_of_message;
+
+      // optional string serverTime = 1;
+      case 1: {
+        message.serverTime = readString(bb, readVarint32(bb));
+        break;
+      }
+
+      default:
+        skipUnknownField(bb, tag & 7);
+    }
+  }
+
+  return message;
+}
+
+export interface S2C_PlayerLeave {
+  serverTime?: string;
+}
+
+export function encodeS2C_PlayerLeave(message: S2C_PlayerLeave): Uint8Array {
+  let bb = popByteBuffer();
+  _encodeS2C_PlayerLeave(message, bb);
+  return toUint8Array(bb);
+}
+
+function _encodeS2C_PlayerLeave(message: S2C_PlayerLeave, bb: ByteBuffer): void {
+  // optional string serverTime = 1;
+  let $serverTime = message.serverTime;
+  if ($serverTime !== undefined) {
+    writeVarint32(bb, 10);
+    writeString(bb, $serverTime);
+  }
+}
+
+export function decodeS2C_PlayerLeave(binary: Uint8Array): S2C_PlayerLeave {
+  return _decodeS2C_PlayerLeave(wrapByteBuffer(binary));
+}
+
+function _decodeS2C_PlayerLeave(bb: ByteBuffer): S2C_PlayerLeave {
+  let message: S2C_PlayerLeave = {} as any;
+
+  end_of_message: while (!isAtEnd(bb)) {
+    let tag = readVarint32(bb);
+
+    switch (tag >>> 3) {
+      case 0:
+        break end_of_message;
+
+      // optional string serverTime = 1;
+      case 1: {
+        message.serverTime = readString(bb, readVarint32(bb));
+        break;
+      }
+
+      default:
+        skipUnknownField(bb, tag & 7);
+    }
+  }
+
+  return message;
+}
+
 export interface S2C_HeartBeat {
   serverTime?: string;
 }

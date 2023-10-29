@@ -63,7 +63,7 @@ export class NetManager {
 
     static broadcastMessage(protoId: number, data: any) {
         for (const [clientUuid, client] of this.clientList) {
-            if (client.readyState == WebSocket.OPEN) continue
+            if (client.readyState != WebSocket.OPEN) continue
             this.sendData(client, protoId, data)
         }
     }

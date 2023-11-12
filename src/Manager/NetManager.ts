@@ -7,7 +7,7 @@ class webSocketClient extends WebSocket {
     public uuid: string
     public heartbeatTimer: number
     public heartbeatInterval: NodeJS.Timeout
-    public lastHearbeatTime: string
+    public lastHearbeatTime: number
 }
 
 
@@ -17,7 +17,7 @@ export class NetManager {
     static webSocket: WebSocketServer
     static clientList: Map<string, webSocketClient> = new Map()
     static heartbeatTimer: number = 5000
-    static heartbeatTimeoutTimer: number = 30 * 1000
+    static heartbeatTimeoutTimer: number = 30
 
 
     static init() {
@@ -28,7 +28,7 @@ export class NetManager {
             ws.on("close", this.onClose)
             ws.on("message", this.recvData)
 
-            ws.lastHearbeatTime = String(Date.now())
+            ws.lastHearbeatTime = Math.ceil(Date.now() / 1000)
 
             ws.heartbeatInterval = setInterval(this.sendHeartbeat.bind(this), NetManager.heartbeatTimer, ws)
             this.clientList.set(ws.uuid, ws)
@@ -48,17 +48,17 @@ export class NetManager {
 
 
     static sendHeartbeat(ws: webSocketClient) {
-        const serverTime = Date.now()
+        const serverTime = Math.ceil(Date.now() / 1000)
 
         if (ws.lastHearbeatTime && (serverTime - Number(ws.lastHearbeatTime)) >= NetManager.heartbeatTimeoutTimer) {
             clearInterval(ws.heartbeatInterval)
             return ws.close()
         }
-        this.sendData(ws, 1000, { serverTime: String(Date.now()) } as pb.S2C_HeartBeat)
+        this.sendData(ws, 1000, { serverTime: serverTime } as pb.S2C_HeartBeat)
     }
 
     static recvHeartbeat(ws: webSocketClient) {
-        ws.lastHearbeatTime = String(Date.now())
+        ws.lastHearbeatTime = Math.ceil(Date.now() / 1000)
     }
 
     static broadcastMessage(protoId: number, data: any) {

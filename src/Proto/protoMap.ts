@@ -7,6 +7,15 @@ export const protoId2Name: { [protoId: number]: string } = {
     1005: "S2C_PlayerLeave"
 }
 
+export const protoName2Id: { [protoName: string]: number } = {
+    S2C_HeartBeat: 1000,
+    C2S_HeartBeat: 1001,
+    S2C_Frames: 1002,
+    C2S_Frames: 1003,
+    S2C_PlayerJoin: 1004,
+    S2C_PlayerLeave: 1005
+}
+
 export enum EnumProtoId {
     S2C_HeartBeat = 1000,
     C2S_HeartBeat = 1001,

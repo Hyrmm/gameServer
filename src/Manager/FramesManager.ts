@@ -6,7 +6,7 @@ export class FramesManager {
     static pendingFrame: S2C_Frames = { timePast: 0, frames: 0, playerMove: [] }
 
     static init() {
-        setInterval(this.syncFrames.bind(this), 100)
+        setInterval(this.syncFrames.bind(this), 17)
     }
 
     static syncFrames() {

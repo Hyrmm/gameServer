@@ -1,7 +1,8 @@
 import * as pb from "../Proto/pb"
 import { v1 } from "uuid"
 import { WebSocketServer, WebSocket } from "ws"
-import { protoId2Name } from "../Proto/protoMap"
+import { EnumProtoId, protoId2Name } from "../Proto/protoMap"
+import { FramesManager } from "./FramesManager"
 
 class webSocketClient extends WebSocket {
     public uuid: string
@@ -37,15 +38,32 @@ export class NetManager {
 
     }
 
-    static onClose(this: webSocketClient) {
-        if (this.heartbeatInterval) {
-            clearInterval(this.heartbeatInterval)
-            NetManager.clientList.delete(this.uuid)
+    static recvData(this: webSocketClient, data: Buffer) {
+        const commonData = pb.decodeCommonData(data)
+        const protoName = protoId2Name[commonData.protoId]
+        const dataBody = pb[`decode${protoName}`](commonData.body)
+
+        // 暂且消息处理在这分发，后端不太擅长，不知道如何设计，先放着堆吧
+        if (commonData.protoId == 1001) {
+            NetManager.recvHeartbeat(this)
         }
-        console.log(`[clientClose]:${this.uuid}`)
+
+        if (commonData.protoId == EnumProtoId.C2S_Frames) {
+            FramesManager.applyFrames(dataBody as pb.C2S_Frames)
+        }
+
+
+        console.log(`[recvData]:${commonData.protoId}|${protoName}`, dataBody, this.uuid)
     }
 
-
+    static sendData(ws: webSocketClient, protoId: number, data: any) {
+        const protoName = protoId2Name[protoId]
+        const dataBody = pb[`encode${protoName}`](data)
+        const commonData = { protoId: protoId, body: dataBody }
+        ws.send(pb.encodeCommonData(commonData), { binary: true })
+        if (protoId == 1002) return
+        console.log(`[sendData]:${protoId}|${protoName}`, data, ws.uuid)
+    }
 
     static sendHeartbeat(ws: webSocketClient) {
         const serverTime = Math.ceil(Date.now() / 1000)
@@ -68,23 +86,12 @@ export class NetManager {
         }
     }
 
-
-    static recvData(this: webSocketClient, data: Buffer) {
-        const commonData = pb.decodeCommonData(data)
-        const protoName = protoId2Name[commonData.protoId]
-        const dataBody = pb[`decode${protoName}`](commonData.body)
-        if (commonData.protoId == 1001) {
-            NetManager.recvHeartbeat(this)
+    static onClose(this: webSocketClient) {
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval)
+            NetManager.clientList.delete(this.uuid)
         }
-        console.log(`[recvData]:${commonData.protoId}|${protoName}`, dataBody, this.uuid)
-    }
-
-    static sendData(ws: webSocketClient, protoId: number, data: any) {
-        const protoName = protoId2Name[protoId]
-        const dataBody = pb[`encode${protoName}`](data)
-        const commonData = { protoId: protoId, body: dataBody }
-        ws.send(pb.encodeCommonData(commonData), { binary: true })
-        console.log(`[sendData]:${protoId}|${protoName}`, data, ws.uuid)
+        console.log(`[clientClose]:${this.uuid}`)
     }
 
 }

@@ -203,9 +203,10 @@ function _decodeC2S_Frames(bb: ByteBuffer): C2S_Frames {
 }
 
 export interface PlayerMove {
-  playerId?: number;
-  dt?: string;
-  speed?: MoveSpeed;
+  dt: number;
+  playerId: number;
+  velocityX?: number;
+  velocityY?: number;
 }
 
 export function encodePlayerMove(message: PlayerMove): Uint8Array {
@@ -215,29 +216,32 @@ export function encodePlayerMove(message: PlayerMove): Uint8Array {
 }
 
 function _encodePlayerMove(message: PlayerMove, bb: ByteBuffer): void {
-  // optional int32 playerId = 1;
+  // required int32 dt = 1;
+  let $dt = message.dt;
+  if ($dt !== undefined) {
+    writeVarint32(bb, 8);
+    writeVarint64(bb, intToLong($dt));
+  }
+  
+  // required int32 playerId = 2;
   let $playerId = message.playerId;
   if ($playerId !== undefined) {
-    writeVarint32(bb, 8);
+    writeVarint32(bb, 16);
     writeVarint64(bb, intToLong($playerId));
   }
 
-  // optional string dt = 2;
-  let $dt = message.dt;
-  if ($dt !== undefined) {
-    writeVarint32(bb, 18);
-    writeString(bb, $dt);
+  // optional int32 velocityX = 3;
+  let $velocityX = message.velocityX;
+  if ($velocityX !== undefined) {
+    writeVarint32(bb, 24);
+    writeVarint64(bb, intToLong($velocityX));
   }
 
-  // optional MoveSpeed speed = 3;
-  let $speed = message.speed;
-  if ($speed !== undefined) {
-    writeVarint32(bb, 26);
-    let nested = popByteBuffer();
-    _encodeMoveSpeed($speed, nested);
-    writeVarint32(bb, nested.limit);
-    writeByteBuffer(bb, nested);
-    pushByteBuffer(nested);
+  // optional int32 velocityY = 4;
+  let $velocityY = message.velocityY;
+  if ($velocityY !== undefined) {
+    writeVarint32(bb, 32);
+    writeVarint64(bb, intToLong($velocityY));
   }
 }
 
@@ -255,23 +259,27 @@ function _decodePlayerMove(bb: ByteBuffer): PlayerMove {
       case 0:
         break end_of_message;
 
-      // optional int32 playerId = 1;
+      // required int32 dt = 1;
       case 1: {
+        message.dt = readVarint32(bb);
+        break;
+      }
+
+      // required int32 playerId = 2;
+      case 2: {
         message.playerId = readVarint32(bb);
         break;
       }
 
-      // optional string dt = 2;
-      case 2: {
-        message.dt = readString(bb, readVarint32(bb));
-        break;
-      }
-
-      // optional MoveSpeed speed = 3;
+      // optional int32 velocityX = 3;
       case 3: {
-        let limit = pushTemporaryLength(bb);
-        message.speed = _decodeMoveSpeed(bb);
-        bb.limit = limit;
+        message.velocityX = readVarint32(bb);
+        break;
+      }
+
+      // optional int32 velocityY = 4;
+      case 4: {
+        message.velocityY = readVarint32(bb);
         break;
       }
 
@@ -280,66 +288,11 @@ function _decodePlayerMove(bb: ByteBuffer): PlayerMove {
     }
   }
 
-  return message;
-}
+  if (message.dt === undefined)
+    throw new Error("Missing required field: dt");
 
-export interface MoveSpeed {
-  x?: number;
-  y?: number;
-}
-
-export function encodeMoveSpeed(message: MoveSpeed): Uint8Array {
-  let bb = popByteBuffer();
-  _encodeMoveSpeed(message, bb);
-  return toUint8Array(bb);
-}
-
-function _encodeMoveSpeed(message: MoveSpeed, bb: ByteBuffer): void {
-  // optional int32 x = 1;
-  let $x = message.x;
-  if ($x !== undefined) {
-    writeVarint32(bb, 8);
-    writeVarint64(bb, intToLong($x));
-  }
-
-  // optional int32 y = 2;
-  let $y = message.y;
-  if ($y !== undefined) {
-    writeVarint32(bb, 16);
-    writeVarint64(bb, intToLong($y));
-  }
-}
-
-export function decodeMoveSpeed(binary: Uint8Array): MoveSpeed {
-  return _decodeMoveSpeed(wrapByteBuffer(binary));
-}
-
-function _decodeMoveSpeed(bb: ByteBuffer): MoveSpeed {
-  let message: MoveSpeed = {} as any;
-
-  end_of_message: while (!isAtEnd(bb)) {
-    let tag = readVarint32(bb);
-
-    switch (tag >>> 3) {
-      case 0:
-        break end_of_message;
-
-      // optional int32 x = 1;
-      case 1: {
-        message.x = readVarint32(bb);
-        break;
-      }
-
-      // optional int32 y = 2;
-      case 2: {
-        message.y = readVarint32(bb);
-        break;
-      }
-
-      default:
-        skipUnknownField(bb, tag & 7);
-    }
-  }
+  if (message.playerId === undefined)
+    throw new Error("Missing required field: playerId");
 
   return message;
 }

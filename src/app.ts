@@ -1,5 +1,5 @@
-import { FramesManager } from "./Manager/FramesManager";
 import { NetManager } from "./Manager/NetManager";
+import { RoomsManager } from "./Manager/RoomsManager";
 
 
 
@@ -15,5 +15,4 @@ import { NetManager } from "./Manager/NetManager";
 
 
 NetManager.init()
-
-FramesManager.init()
+RoomsManager.init()

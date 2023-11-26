@@ -2,9 +2,11 @@ import * as pb from "../Proto/pb"
 import { v1 } from "uuid"
 import { WebSocketServer, WebSocket } from "ws"
 import { EnumProtoId, protoId2Name } from "../Proto/protoMap"
-import { FramesManager } from "./FramesManager"
+import { BaseManager } from "./BaseManager"
+import { EventManager } from "./EventManager"
+import { EnumLocalMsg } from "../Config/Enum"
 
-class webSocketClient extends WebSocket {
+export class webSocketClient extends WebSocket {
     public uuid: string
     public heartbeatTimer: number
     public heartbeatInterval: NodeJS.Timeout
@@ -14,9 +16,9 @@ class webSocketClient extends WebSocket {
 
 
 
-export class NetManager {
+export class NetManager extends BaseManager {
     static webSocket: WebSocketServer
-    static clientList: Map<string, webSocketClient> = new Map()
+    static clientsMap: Map<string, webSocketClient> = new Map()
     static heartbeatTimer: number = 5000
     static heartbeatTimeoutTimer: number = 30
 
@@ -26,13 +28,14 @@ export class NetManager {
         this.webSocket.on("connection", (ws: webSocketClient) => {
             ws.uuid = v1()
 
-            ws.on("close", this.onClose)
+            ws.on("close", function (this: webSocketClient) { NetManager.clientClose(this) })
             ws.on("message", this.recvData)
 
             ws.lastHearbeatTime = Math.ceil(Date.now() / 1000)
-
             ws.heartbeatInterval = setInterval(this.sendHeartbeat.bind(this), NetManager.heartbeatTimer, ws)
-            this.clientList.set(ws.uuid, ws)
+
+            this.clientsMap.set(ws.uuid, ws)
+            this.sendData(ws, EnumProtoId.S2C_Login, { uuid: ws.uuid })
         })
 
 
@@ -48,12 +51,8 @@ export class NetManager {
             NetManager.recvHeartbeat(this)
         }
 
-        if (commonData.protoId == EnumProtoId.C2S_Frames) {
-            FramesManager.applyFrames(dataBody as pb.C2S_Frames)
-        }
-
-
         console.log(`[recvData]:${commonData.protoId}|${protoName}`, dataBody, this.uuid)
+        EventManager.emit(protoName, dataBody)
     }
 
     static sendData(ws: webSocketClient, protoId: number, data: any) {
@@ -79,20 +78,38 @@ export class NetManager {
         ws.lastHearbeatTime = Math.ceil(Date.now() / 1000)
     }
 
-    static broadcastMessage(protoId: number, data: any) {
-        for (const [clientUuid, client] of this.clientList) {
+    static broadcastMessage(clientsUuid: Array<string>, protoId: number, data: any) {
+        for (const uuid of clientsUuid) {
+            const client = this.clientsMap.get(uuid)
             if (client.readyState != WebSocket.OPEN) continue
             this.sendData(client, protoId, data)
         }
     }
 
-    static onClose(this: webSocketClient) {
-        if (this.heartbeatInterval) {
-            clearInterval(this.heartbeatInterval)
-            NetManager.clientList.delete(this.uuid)
-        }
-        console.log(`[clientClose]:${this.uuid}`)
+    static broadcastMessageOne(clientUuid: string, protoId: number, data: any) {
+        const client = this.clientsMap.get(clientUuid)
+        this.sendData(client, protoId, data)
     }
+
+    static broadcastMessageAll(protoId: number, data: any) {
+        for (const [clientUuid, client] of this.clientsMap) {
+            if (client.readyState != WebSocket.OPEN) continue
+            this.sendData(client, protoId, data)
+        }
+    }
+
+    static clientClose(ws: webSocketClient) {
+        if (ws.heartbeatInterval) {
+            clearInterval(ws.heartbeatInterval)
+            NetManager.clientsMap.delete(ws.uuid)
+        }
+
+        EventManager.emit(EnumLocalMsg.ClientClose, { uuid: ws.uuid })
+        console.log(`[clientClose]:${ws.uuid}`)
+    }
+
+
+
 
 }
 

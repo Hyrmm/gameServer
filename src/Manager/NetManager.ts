@@ -4,7 +4,7 @@ import { WebSocketServer, WebSocket } from "ws"
 import { EnumProtoId, protoId2Name } from "../Proto/protoMap"
 import { BaseManager } from "./BaseManager"
 import { EventManager } from "./EventManager"
-import { EnumLocalMsg } from "../Config/Enum"
+import { LocalMsg } from "../Type"
 
 export class webSocketClient extends WebSocket {
     public uuid: string
@@ -104,7 +104,7 @@ export class NetManager extends BaseManager {
             NetManager.clientsMap.delete(ws.uuid)
         }
 
-        EventManager.emit(EnumLocalMsg.ClientClose, { uuid: ws.uuid })
+        EventManager.emit(LocalMsg.EnumLocalMsg.ClientClose, { uuid: ws.uuid })
         console.log(`[clientClose]:${ws.uuid}`)
     }
 

@@ -1,9 +1,10 @@
 import { EnumProtoName } from "Proto/protoMap";
 import { EventManager } from "./EventManager";
+import { webSocketClient } from "./NetManager"
 import { LocalMsg } from "../Type";
 
 export class BaseManager {
-    static registerListener(eventName: EnumProtoName, callback: (recvData) => void, target?: any) {
+    static registerListener(eventName: EnumProtoName, callback: (recvData, webSocketClient: webSocketClient) => void, target?: any) {
         EventManager.on(eventName, callback, target)
     }
 

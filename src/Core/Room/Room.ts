@@ -7,7 +7,7 @@ import { Formater } from "../../Utils/Formater"
 import { Player } from "../Player/Player"
 import { RoomFramesMgr } from "./RoomFramesMgr"
 
-import * as pb from "../../Proto/pb"
+import * as pb from "../../Proto/proto"
 
 
 export class Room {
@@ -36,40 +36,22 @@ export class Room {
         NetManager.broadcastMessage(this.allPlayersUuid, EnumProtoId.S2C_Frames, frames)
     }
 
+    public syncHistoryFrames(recvdPlayer: Player) {
+        // 同步所有历史帧，分块同步给新加入客户端，防止长时间堵塞事件循环队列
+        this.framesMgr.slicedHistoryFrames(0, recvdPlayer)
+    }
+
     public applyFrames(frames: pb.C2S_Frames) {
         this.framesMgr.applyFrames(frames)
     }
 
-    public notifyPlayerJoin(joinedPlayer: Player) {
-        const curRoomAllPlayersUuid = this.allPlayersUuid
-        const playerPos = Formater.wrap2TowInt(joinedPlayer.positionX, joinedPlayer.positionY)
-        const playerVelocity = Formater.wrap2TowInt(joinedPlayer.velocityX, joinedPlayer.velocityY)
-        const sendData: pb.S2C_PlayerJoin = { uuid: joinedPlayer.uuid, position: playerPos, velocity: playerVelocity }
-        NetManager.broadcastMessage(curRoomAllPlayersUuid, EnumProtoId.S2C_PlayerJoin, sendData)
+    public applyPlayerJoin(joinedPlayer: Player) {
+        this.framesMgr.applyPlayerJoinFrame(joinedPlayer)
     }
 
-    public notifyPlayerLeave(leavedPlayer: Player) {
-        const curRoomAllPlayersUuid = this.allPlayersUuid
-        const sendData: pb.S2C_PlayerLeave = { uuid: leavedPlayer.uuid }
-        NetManager.broadcastMessage(curRoomAllPlayersUuid, EnumProtoId.S2C_PlayerLeave, sendData)
+    public applyPlayerLeave(leavedPlayer: Player) {
+        this.framesMgr.applyPlayerLeaveFrame(leavedPlayer)
     }
-
-    public notifyRoomStatus(recvdPlayer: Player) {
-        const curRoomAllPlayers = this.allPlayers
-
-        // 处理数据
-        const players: Array<pb.Player> = []
-        for (const player of curRoomAllPlayers) {
-            const playerPos = Formater.wrap2TowInt(player.positionX, player.positionY)
-            const playerVelocity = Formater.wrap2TowInt(player.velocityX, player.velocityY)
-            players.push({ uuid: player.uuid, position: playerPos, velocity: playerVelocity })
-        }
-
-        const sendData: pb.S2C_SyncRoomStatus = { players: players }
-        NetManager.broadcastMessageOne(recvdPlayer.uuid, EnumProtoId.S2C_SyncRoomStatus, sendData)
-    }
-
-
 
     public get allPlayers(): Array<Player> {
         return [...this.playersMap.values()]

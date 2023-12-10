@@ -1,7 +1,7 @@
-import * as pb from "../Proto/pb"
+import * as pb from "../Proto/proto"
 import { v1 } from "uuid"
 import { WebSocketServer, WebSocket } from "ws"
-import { EnumProtoId, protoId2Name } from "../Proto/protoMap"
+import { EnumProtoId, protoId2Name, protoName2Id } from "../Proto/protoMap"
 import { BaseManager } from "./BaseManager"
 import { EventManager } from "./EventManager"
 import { LocalMsg } from "../Type"
@@ -47,12 +47,12 @@ export class NetManager extends BaseManager {
         const dataBody = pb[`decode${protoName}`](commonData.body)
 
         // 暂且消息处理在这分发，后端不太擅长，不知道如何设计，先放着堆吧
-        if (commonData.protoId == 1001) {
+        if (commonData.protoId == EnumProtoId.C2S_HeartBeat) {
             NetManager.recvHeartbeat(this)
         }
 
         console.log(`[recvData]:${commonData.protoId}|${protoName}`, dataBody, this.uuid)
-        EventManager.emit(protoName, dataBody)
+        EventManager.emit(protoName, dataBody, this)
     }
 
     static sendData(ws: webSocketClient, protoId: number, data: any) {
@@ -60,7 +60,7 @@ export class NetManager extends BaseManager {
         const dataBody = pb[`encode${protoName}`](data)
         const commonData = { protoId: protoId, body: dataBody }
         ws.send(pb.encodeCommonData(commonData), { binary: true })
-        if (protoId == 1002) return
+        if (protoId == EnumProtoId.S2C_Frames) return
         console.log(`[sendData]:${protoId}|${protoName}`, data, ws.uuid)
     }
 
@@ -71,7 +71,7 @@ export class NetManager extends BaseManager {
             clearInterval(ws.heartbeatInterval)
             return ws.close()
         }
-        this.sendData(ws, 1000, { serverTime: serverTime } as pb.S2C_HeartBeat)
+        this.sendData(ws, EnumProtoId.S2C_HeartBeat, { serverTime: serverTime } as pb.S2C_HeartBeat)
     }
 
     static recvHeartbeat(ws: webSocketClient) {
@@ -101,9 +101,9 @@ export class NetManager extends BaseManager {
     static clientClose(ws: webSocketClient) {
         if (ws.heartbeatInterval) {
             clearInterval(ws.heartbeatInterval)
-            NetManager.clientsMap.delete(ws.uuid)
         }
-
+        
+        NetManager.clientsMap.delete(ws.uuid)
         EventManager.emit(LocalMsg.EnumLocalMsg.ClientClose, { uuid: ws.uuid })
         console.log(`[clientClose]:${ws.uuid}`)
     }

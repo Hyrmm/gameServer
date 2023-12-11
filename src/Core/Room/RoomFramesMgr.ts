@@ -54,7 +54,7 @@ export class BaseRoomFramesMgr {
     public slicedHistoryFrames(startIndex: number, recvdPlayer: Player) {
         let hasNextTick = true
         let isSyncFinish = false
-        let endIndex = startIndex + 300
+        let endIndex = startIndex + 100
 
         if (endIndex > this.historyFrames.length) {
             isSyncFinish = true

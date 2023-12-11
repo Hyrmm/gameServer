@@ -56,6 +56,7 @@ export class NetManager extends BaseManager {
     }
 
     static sendData(ws: webSocketClient, protoId: number, data: any) {
+        if (!ws || ws.readyState != WebSocket.OPEN) return
         const protoName = protoId2Name[protoId]
         const dataBody = pb[`encode${protoName}`](data)
         const commonData = { protoId: protoId, body: dataBody }
@@ -102,7 +103,7 @@ export class NetManager extends BaseManager {
         if (ws.heartbeatInterval) {
             clearInterval(ws.heartbeatInterval)
         }
-        
+
         NetManager.clientsMap.delete(ws.uuid)
         EventManager.emit(LocalMsg.EnumLocalMsg.ClientClose, { uuid: ws.uuid })
         console.log(`[clientClose]:${ws.uuid}`)

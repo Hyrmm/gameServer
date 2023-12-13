@@ -54,7 +54,7 @@ export class BaseRoomFramesMgr {
     public slicedHistoryFrames(startIndex: number, recvdPlayer: Player) {
         let hasNextTick = true
         let isSyncFinish = false
-        let endIndex = startIndex + 100
+        let endIndex = startIndex + 600
 
         if (endIndex > this.historyFrames.length) {
             isSyncFinish = true
@@ -62,9 +62,12 @@ export class BaseRoomFramesMgr {
             endIndex = this.historyFrames.length
         }
 
-        const frames: Array<pb.S2C_Frames> = this.historyFrames.slice(startIndex, endIndex)
-        const sendData: pb.S2C_SyncRoomStatus = { frames: frames, isSyncFinish: isSyncFinish ? 1 : 0 }
-        NetManager.broadcastMessageOne(recvdPlayer.uuid, EnumProtoId.S2C_SyncRoomStatus, sendData)
+        // 加快同步历史帧的效率，剔除对状态计算的无意义帧数据
+        const frames: Array<pb.S2C_Frames> = this.filterDirtyFrame(this.historyFrames.slice(startIndex, endIndex))
+        if (frames.length || isSyncFinish) {
+            const sendData: pb.S2C_SyncRoomStatus = { frames: frames, isSyncFinish: isSyncFinish ? 1 : 0 }
+            NetManager.broadcastMessageOne(recvdPlayer.uuid, EnumProtoId.S2C_SyncRoomStatus, sendData)
+        }
 
         // 根据分割的范围判断下次事件循环是否继续同步
         if (hasNextTick) {
@@ -78,6 +81,15 @@ export class BaseRoomFramesMgr {
         this.pendingFrame.playerLeave = []
     }
 
+    private filterDirtyFrame(frames: Array<pb.S2C_Frames>): Array<pb.S2C_Frames> {
+        const filtedFrames = []
+        for (const frame of frames) {
+            if (frame.playerJoin.length || frame.playerLeave.length || frame.playerMove.length) {
+                filtedFrames.push(frame)
+            }
+        }
+        return filtedFrames
+    }
     private mergePlayerMoveInputs(): Array<Input.TypePlayerMove> {
 
         let mergedPlayerMoveInputs: Array<Input.TypePlayerMove> = []

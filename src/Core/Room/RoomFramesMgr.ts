@@ -42,13 +42,13 @@ export class BaseRoomFramesMgr {
     public applyPlayerJoinFrame(player: Player) {
         const position = Formater.wrap2TowInt(player.positionX, player.positionY)
         const velocity = Formater.wrap2TowInt(player.velocityX, player.velocityY)
-        this.pendingFrame.playerJoin.push({ player: { uuid: player.uuid, position, velocity } })
+        this.pendingFrame.playerJoin.push({ player: { uuid: player.uuid, position, velocity, role: player.role } })
     }
 
     public applyPlayerLeaveFrame(player: Player) {
         const position = Formater.wrap2TowInt(player.positionX, player.positionY)
         const velocity = Formater.wrap2TowInt(player.velocityX, player.velocityY)
-        this.pendingFrame.playerLeave.push({ player: { uuid: player.uuid, position, velocity } })
+        this.pendingFrame.playerLeave.push({ player: { uuid: player.uuid, position, velocity, role: player.role } })
     }
 
     public slicedHistoryFrames(startIndex: number, recvdPlayer: Player) {

@@ -776,6 +776,7 @@ function _decodePlayerLeave(bb: ByteBuffer): PlayerLeave {
 
 export interface Player {
   uuid: string;
+  role: string;
   position: TowInt;
   velocity: TowInt;
 }
@@ -794,10 +795,17 @@ function _encodePlayer(message: Player, bb: ByteBuffer): void {
     writeString(bb, $uuid);
   }
 
-  // required TowInt position = 2;
+  // required string role = 2;
+  let $role = message.role;
+  if ($role !== undefined) {
+    writeVarint32(bb, 18);
+    writeString(bb, $role);
+  }
+
+  // required TowInt position = 3;
   let $position = message.position;
   if ($position !== undefined) {
-    writeVarint32(bb, 18);
+    writeVarint32(bb, 26);
     let nested = popByteBuffer();
     _encodeTowInt($position, nested);
     writeVarint32(bb, nested.limit);
@@ -805,10 +813,10 @@ function _encodePlayer(message: Player, bb: ByteBuffer): void {
     pushByteBuffer(nested);
   }
 
-  // required TowInt velocity = 3;
+  // required TowInt velocity = 4;
   let $velocity = message.velocity;
   if ($velocity !== undefined) {
-    writeVarint32(bb, 26);
+    writeVarint32(bb, 34);
     let nested = popByteBuffer();
     _encodeTowInt($velocity, nested);
     writeVarint32(bb, nested.limit);
@@ -837,16 +845,22 @@ function _decodePlayer(bb: ByteBuffer): Player {
         break;
       }
 
-      // required TowInt position = 2;
+      // required string role = 2;
       case 2: {
+        message.role = readString(bb, readVarint32(bb));
+        break;
+      }
+
+      // required TowInt position = 3;
+      case 3: {
         let limit = pushTemporaryLength(bb);
         message.position = _decodeTowInt(bb);
         bb.limit = limit;
         break;
       }
 
-      // required TowInt velocity = 3;
-      case 3: {
+      // required TowInt velocity = 4;
+      case 4: {
         let limit = pushTemporaryLength(bb);
         message.velocity = _decodeTowInt(bb);
         bb.limit = limit;
@@ -860,6 +874,9 @@ function _decodePlayer(bb: ByteBuffer): Player {
 
   if (message.uuid === undefined)
     throw new Error("Missing required field: uuid");
+
+  if (message.role === undefined)
+    throw new Error("Missing required field: role");
 
   if (message.position === undefined)
     throw new Error("Missing required field: position");

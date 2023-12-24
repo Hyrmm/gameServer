@@ -37,7 +37,7 @@ export class NetManager extends BaseManager {
             this.clientsMap.set(ws.uuid, ws)
             this.sendData(ws, EnumProtoId.S2C_Login, { uuid: ws.uuid })
         })
-
+        
 
     }
 
